@@ -1,4 +1,4 @@
-.container {
+/* .container {
     margin: 0 auto;
     max-width: 1200px;
     width: 90%;
@@ -322,9 +322,9 @@ svg {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: #d4edda; /* Default success color */
-    color: #155724; /* Default success text color */
-    border: 1px solid #c3e6cb; /* Default success border */
+    background: #d4edda; 
+    color: #155724; 
+    border: 1px solid #c3e6cb; 
     border-radius: 4px;
     padding: 10px 20px;
     display: flex;
@@ -359,7 +359,6 @@ svg {
     font-size: 0.8em;
   }
   
-  /* Hide notification */
   .notification.hide {
     opacity: 0;
     transform: translateY(20px);
@@ -373,4 +372,4 @@ p {
     margin-inline-end: 0px;
     unicode-bidi: isolate;
 }
-
+ */

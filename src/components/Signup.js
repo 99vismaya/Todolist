@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TextField, Button, Paper, Typography, Grid2 } from '@mui/material';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { TextField, Button, Paper, Typography, Grid2, Snackbar, Alert, Box } from '@mui/material';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -8,11 +10,28 @@ const Signup = () => {
     password: '',
     confirmPassword: '',
   });
-
   const [errors, setErrors] = useState({});
   const [notification, setNotification] = useState({ message: "", type: "" });
   const [allUsers, setAllUsers] = useState([]);
   const navigate = useNavigate();
+
+  const passwordConditions = [
+    { condition: "minLength", label: "Password must be at least 8 characters long" },
+    { condition: "uppercase", label: "Include at least 1 uppercase letter" },
+    { condition: "lowercase", label: "Include at least 1 lowercase letter" },
+    { condition: "number", label: "Include at least 1 number" },
+    { condition: "specialChar", label: "Include at least 1 special character" },
+  ];
+
+  const checkPasswordValidations = (password) => {
+    return {
+      minLength: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      specialChar: /[!@#$%^&*]/.test(password),
+    };
+  };
 
   const validate = (fieldValues = formData) => {
     let tempErrors = { ...errors };
@@ -24,19 +43,15 @@ const Signup = () => {
     }
 
     if ('password' in fieldValues) {
+      const passwordValidations = checkPasswordValidations(fieldValues.password);
+      const isPasswordValid = Object.values(passwordValidations).every(v => v);
+
       tempErrors.password = fieldValues.password ? "" : "Password is required";
-      if (fieldValues.password) {
-        const passwordValid = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(fieldValues.password);
-        tempErrors.password = passwordValid
-          ? ""
-          : [
-              "Password must be at least 8 characters long",
-              "Include at least 1 number",
-              "Include at least 1 uppercase letter",
-              "Include at least 1 lowercase letter",
-              "Include at least 1 special character",
-            ];
-      }
+      tempErrors.password = isPasswordValid
+        ? ""
+        : passwordConditions
+            .filter(cond => !passwordValidations[cond.condition])
+            .map(cond => cond.label);
     }
 
     if ('confirmPassword' in fieldValues) {
@@ -74,7 +89,7 @@ const Signup = () => {
       if (userExists) {
         setNotification({ message: "You have already created an account. Please login.", type: "error" });
         setTimeout(() => setNotification({ message: "", type: "" }), 2000);
-        setTimeout(() => navigate('/Login'), 2000);
+        setTimeout(() => navigate('/'), 2000);
       } else {
         storedData.push({ email: formData.email, password: formData.password });
         localStorage.setItem('users', JSON.stringify(storedData));
@@ -82,11 +97,15 @@ const Signup = () => {
 
         setNotification({ message: 'User registered successfully', type: "success" });
         setTimeout(() => setNotification({ message: "", type: "" }), 2000);
-        setTimeout(() => navigate('/Login'), 2000);
+        setTimeout(() => navigate('/'), 2000);
       }
     } else {
       console.log("Validation failed");
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setNotification({ message: "", type: "" });
   };
 
   const displayUsers = () => {
@@ -99,7 +118,8 @@ const Signup = () => {
   }, []);
 
   return (
-    <Paper elevation={7} style={{ padding: '20px', maxWidth: '400px', margin: 'auto', position:'relative', top:'100px'}}>
+    <>
+    <Paper elevation={7} style={{ padding: '20px', maxWidth: '400px', margin: 'auto', position: 'relative', top: '100px' }}>
       <Typography variant="h4" align="center" gutterBottom>Signup</Typography>
       <form onSubmit={handleSubmit}>
         <Grid2 container spacing={2} direction="column" justifyContent="space-between" style={{ height: '100%' }}>
@@ -115,7 +135,7 @@ const Signup = () => {
               required
             />
           </Grid2>
-          <Grid2 item xs={12} style={{whiteSpace: "pre-line"}}>
+          <Grid2 item xs={12} style={{ whiteSpace: "pre-line" }}>
             <TextField
               fullWidth
               label="Password"
@@ -126,14 +146,21 @@ const Signup = () => {
               error={Boolean(errors.password)}
               helperText={
                 Array.isArray(errors.password) && errors.password.length > 0 ? (
-                  <span style={{ display: "block" }}>
-                    {errors.password.map((error, index) => (
-                      <span key={index} style={{ display: "flex", alignItems: "center", whiteSpace: "pre-line" }}>
-                        <span className="pi pi-times-circle" style={{ fontSize: '.8rem', color: 'red', marginRight: '5px' }}></span>
-                        {error}
-                      </span>
-                    ))}
-                  </span>
+                  <Box style={{ display: "block" }}>
+                    {passwordConditions.map((condition, index) => {
+                      const isValid = checkPasswordValidations(formData.password)[condition.condition];
+                      return (
+                        <Box key={index} style={{ display: "flex", alignItems: "center" }}>
+                          {isValid ? (
+                            <CheckCircleIcon style={{ fontSize: '.8rem', color: 'green', marginRight: '5px' }} />
+                          ) : (
+                            <HighlightOffIcon style={{ fontSize: '.8rem', color: 'red', marginRight: '5px' }} />
+                          )}
+                          <span style={{ color: isValid ? 'green' : 'red' }}>{condition.label}</span>
+                        </Box>
+                      );
+                    })}
+                  </Box>
                 ) : (
                   errors.password
                 )
@@ -162,12 +189,18 @@ const Signup = () => {
         </Grid2>
       </form>
 
-      {notification.message && (
-        <div className={`notification ${notification.type === "error" ? "notification-error" : "notification-success"}`}>
-          <span style={{ fontSize: '.8rem' }}><span class={notification.type === "error" ? "pi pi-times-circle":"pi pi-check-circle"} style={{ fontSize: '.8rem' }}></span> {notification.message}</span>
-        </div>
-      )}
+      <Snackbar
+        open={Boolean(notification.message)}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} 
+      >
+        <Alert severity={notification.type === "error" ? "error" : "success"}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Paper>
+    </>
   );
 };
 

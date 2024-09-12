@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TextField, Button, Paper, Typography, Grid2 } from '@mui/material';
+import { Link } from 'react-router-dom';
+import { TextField, Button, Paper, Typography, Grid2, Snackbar, Alert } from '@mui/material';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -37,7 +38,7 @@ const Login = () => {
       );
 
       if (userFound) {
-        localStorage.setItem('email', formData.email); // Store the email in localStorage
+        localStorage.setItem('email', formData.email); 
         setNotification({ message: 'Login successful', type: "success" });
         setTimeout(() => setNotification({ message: "", type: "" }), 2000);
         setTimeout(() => navigate('/Todo'), 2000);
@@ -48,8 +49,12 @@ const Login = () => {
     }
   };
 
+  const handleCloseSnackbar = () => {
+    setNotification({ message: "", type: "" });
+  };
+
   return (
-    <Paper elevation={7} style={{ padding: '20px', maxWidth: '400px', margin: 'auto', position:'relative', top:'100px'}}>
+    <Paper elevation={7} style={{ padding: '20px', maxWidth: '400px', margin: 'auto', position: 'relative', top: '100px' }}>
       <Typography variant="h4" align="center" gutterBottom>
         Login
       </Typography>
@@ -80,6 +85,10 @@ const Login = () => {
               required
             />
           </Grid2>
+          <Typography variant="span" align="center" gutterBottom>
+            Don't have an account?  
+            <Link to="/Signup"> Signup</Link>
+          </Typography>
           <Grid2 item xs={12} style={{ marginTop: 'auto' }}>
             <Button type="submit" variant="contained" color="primary" fullWidth>
               Login
@@ -87,11 +96,17 @@ const Login = () => {
           </Grid2>
         </Grid2>
       </form>
-      {notification.message && (
-        <div className={`notification ${notification.type === "error" ? "notification-error" : "notification-success"}`}>
-          <span style={{ fontSize: '.8rem' }}><span class={notification.type === "error" ? "pi pi-times-circle":"pi pi-check-circle"} style={{ fontSize: '.8rem' }}></span> {notification.message}</span>
-        </div>
-      )}
+      
+      <Snackbar
+        open={Boolean(notification.message)}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} 
+      >
+        <Alert severity={notification.type === "error" ? "error" : "success"}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };
