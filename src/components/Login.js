@@ -12,6 +12,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [notification, setNotification] = useState({ message: "", type: "" });
   const navigate = useNavigate();
+  const [open, setOpen] = React.useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,17 +41,21 @@ const Login = () => {
       if (userFound) {
         localStorage.setItem('email', formData.email); 
         setNotification({ message: 'Login successful', type: "success" });
-        setTimeout(() => setNotification({ message: "", type: "" }), 2000);
         setTimeout(() => navigate('/Todo'), 2000);
+        setOpen(true);
       } else {
         setNotification({ message: 'Invalid Credentials', type: "error" });
-        setTimeout(() => setNotification({ message: "", type: "" }), 2000);
+        setOpen(true);
       }
     }
   };
 
-  const handleCloseSnackbar = () => {
-    setNotification({ message: "", type: "" });
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpen(false);
   };
 
   return (
@@ -98,7 +103,7 @@ const Login = () => {
       </form>
       
       <Snackbar
-        open={Boolean(notification.message)}
+        open={open}
         autoHideDuration={3000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} 

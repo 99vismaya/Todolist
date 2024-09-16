@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
+import CancelIcon from '@mui/icons-material/Cancel';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import "primeicons/primeicons.css";
 
 export default function Dashboard() {
@@ -17,6 +19,7 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const navigate = useNavigate();
+  const [open, setOpen] = React.useState(false);
 
   useEffect(() => {
     const loggedInEmail = localStorage.getItem('email');
@@ -26,9 +29,7 @@ export default function Dashboard() {
     if (currentUser) {
       setUser(currentUser);
       setTasks(currentUser.tasks || []);
-      console.log("Loaded user and tasks: ", currentUser.tasks);
     } else {
-      console.log("No current user found");
     }
   }, []);
 
@@ -67,6 +68,8 @@ export default function Dashboard() {
       const task = tasks[currentTaskIndex];
       if (taskName === task.name && taskState === task.state) {
         setNotification({ message: "No changes made!", type: "error" });
+        setOpenModal(true); 
+        setOpen(true);
         return; 
       }
       const updatedTasks = tasks.map((task, index) =>
@@ -74,17 +77,29 @@ export default function Dashboard() {
       );
       setTasks(updatedTasks);
       setNotification({ message: "Task updated successfully!", type: "success" });
+      setOpenModal(false); 
+      setOpen(true);
     } else {
-      setTasks([...tasks, { name: taskName, state: taskState, createdAt: new Date() }]);
-      setNotification({ message: "Task added successfully!", type: "success" });
+      if(taskName===""){
+        setNotification({ message: "Give task name", type: "error" });
+        setOpenModal(true); 
+        setOpen(true);
+      }
+      else{
+        setTasks([...tasks, { name: taskName, state: taskState, createdAt: new Date() }]);
+        setNotification({ message: "Task added successfully!", type: "success" });  
+        setOpenModal(false);    
+        setOpen(true);   
+      }
+      
     }
 
-    setOpenModal(false); 
   };
 
   const handleDeleteTask = (indexToDelete) => {
     setTasks(tasks.filter((_, index) => index !== indexToDelete));
     setNotification({ message: "Task deleted successfully!", type: "success" });
+    setOpen(true);
   };
 
   const handleCheckboxChange = (index) => {
@@ -99,9 +114,14 @@ export default function Dashboard() {
     return task.state === filter;
   });
 
-  const handleCloseSnackbar = () => {
-    setNotification({ message: "", type: "" });
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpen(false);
   };
+
 
   function formatDate(dateVal) {
     const newDate = new Date(dateVal);
@@ -135,7 +155,7 @@ export default function Dashboard() {
   return (
     <>
     <Box sx={{ display: 'flex', alignItems: 'center'}}>
-          <Typography variant="h4" sx={{ flexGrow: 1, textAlign: 'center'}}>TODO List</Typography>
+          <Typography variant="h4" sx={{ flexGrow: 1,paddingLeft:"20px",paddingTop:"10px", color:"#585858", fontWeight:"700"}}>TODO LIST</Typography>
           <Box sx={{paddingRight:"20px",paddingTop:"10px"}}> 
           <Button 
             variant="contained"  
@@ -232,34 +252,35 @@ export default function Dashboard() {
 
             ))
           ) : (
-            <Typography variant="body1" align="center">No tasks to display</Typography>
+            <Typography sx={{color:"#585858"}} variant="body1" align="center">No todos</Typography>
           )}
         </Box>
       </Paper>
-      <Dialog open={openModal} onClose={() => setOpenModal(false)}>
-        <DialogTitle>
-          {isEditing ? "Edit Task" : "Add Task"}
-          <IconButton
+      <Dialog maxWidth="xl" open={openModal} onClose={() => setOpenModal(false)}>
+      <IconButton
             aria-label="close"
             onClick={() => setOpenModal(false)}
-            sx={{ position: 'absolute', right: 8, top: 8, color: 'grey.500' }} 
+            sx={{ position: 'absolute', right: 1, top: "-50px", color: '#9e9e9e', backgroundColor:"white", borderRadius:"4px",'&:hover':{background:"red",color:"white"}}} 
           >
-            <CloseIcon />
-          </IconButton>
+          <CloseIcon />
+      </IconButton>
+        <DialogTitle sx={{color:"#585858"}}>
+          {isEditing ? "Edit Task" : "Add Task"}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{display:"flex",flexDirection:"column", alignItems:"flex-start"}}>
           <TextField
             label="Task Name"
             value={taskName}
             onChange={handleTaskName}
-            fullWidth
             margin="normal"
+            sx={{width:"300px"}}
           />
-          <FormControl sx={{ m: 1, minWidth: 200 }} size="small">
-            <InputLabel id="demo-simple-select-label">Task State</InputLabel>
+          <FormControl sx={{ m: 1, width:"300px", minWidth: 210, marginTop:"10px", margin:"0px"}}>
+            <InputLabel id="demo-multiple-name-label">Task State</InputLabel>
             <Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
+              labelId="demo-multiple-name-label"
+              fullWidth
+              id="demo-multiple-name"
               value={taskState}
               label="Task State"
               onChange={handleTaskState}
@@ -269,18 +290,18 @@ export default function Dashboard() {
             </Select>
           </FormControl>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{justifyContent:"flex-start", padding:"20px 24px"}}>
         <Button
             variant="contained"
             onClick={handleSaveTask}
-            sx={{ width: '100px', height: '40px', fontSize:"0.8rem", backgroundColor:"#646ff0"}}
+            sx={{ width: '120px', height: '40px', fontSize:"0.8rem", backgroundColor:"#646ff0"}}
           >
             {isEditing ? "Update Task" : "Add Task"}
           </Button>
           <Button
             variant="contained"
             onClick={() => setOpenModal(false)}
-            sx={{ width: '100px', height: '40px', fontSize:"0.8rem", backgroundColor:"#646ff0"}}
+            sx={{ width: '100px', height: '40px', fontSize:"0.8rem", backgroundColor:"#cccdde", color:"#646681"}}
           >
             Cancel
           </Button>
@@ -288,12 +309,15 @@ export default function Dashboard() {
       </Dialog>
 
       <Snackbar
-        open={Boolean(notification.message)}
+        open={open}
         autoHideDuration={3000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity={notification.type === "error" ? "error" : "success"}>
+        <Alert severity={notification.type === "success" ? "success" : "error"} iconMapping={{
+    success: <CheckCircleIcon fontSize="inherit" />,
+    error: <CancelIcon fontSize="inherit" />,
+  }}>
           {notification.message}
         </Alert>
       </Snackbar>
